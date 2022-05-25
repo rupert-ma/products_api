@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -26,24 +27,28 @@ class Products_Detail(APIView):
     #get object by primary key
     #documentation seemed to separate the serializer method from the GET request method, Davids video instructionseems to provide a slimmer way of accomplishing this
 
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise Http404
+
     def get(self,request, pk, format=None):
-        product = get_object_or_404(Product, pk=pk)
+        product = self.get_object(pk)
         serializer = ProductSerializer(product)
         return Response(serializer.data)
 
     def put(self, request, pk, format = None):
-        product = get_object_or_404(Product, pk=pk)
+        product = self.get_object(pk)
         serializer = ProductSerializer(product, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def delete(self, request, pk, format=None):
-        product = get_object_or_404(Product, pk=pk)
+        product = self.get_object(pk)
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
 """
 @api_view(['GET', 'POST'])
